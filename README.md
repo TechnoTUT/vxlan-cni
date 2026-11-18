@@ -113,7 +113,7 @@ end
 - The default MTU (underlay MTU minus 50) is smaller than that of hosts on the VLAN. TCP adapts through MSS, but large UDP packets from those hosts are fragmented or dropped. Raise the underlay MTU if you need 1500 inside.
 - The bridge and the VXLAN device have no address and IPv6 is disabled on them, so the node itself does not join the VLAN.
 - An existing `vxlan<ID>` with a different VNI, remote or port is reported as an error instead of being replaced. Delete it once no pod uses it.
-- Without `peers`, traffic between pods on different nodes goes through the remote VTEP, which may not forward it.
+- Without `peers`, traffic between pods on different nodes depends on the remote VTEP forwarding between its VXLAN remotes. FortiOS does not (see [test/fortigate](test/fortigate)), so set `peers` when pods on different nodes must talk to each other.
 
 ## Development
 
@@ -121,3 +121,5 @@ end
 go test ./...
 go build -o vxlan .
 ```
+
+[test/fortigate](test/fortigate) runs the plugin against a FortiGate VM.
