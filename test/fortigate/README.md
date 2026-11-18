@@ -51,4 +51,14 @@ FortiFirewall-VM64-KVM v7.6.8 build 3744, license status Invalid (evaluation), 1
 - The FortiGate does **not** forward frames between its VXLAN remotes. Set `peers` when pods on different nodes must reach each other.
 - A 1500-byte packet from the VLAN reaches a pod with MTU 1450; the FortiGate fragments the outer packet.
 
-Production runs FortiOS 6.2 on a FortiGate 100D, so repeat the checks there before relying on them, together with throughput and CPU load, which a VM cannot show.
+### FortiGate 100D, FortiOS 6.2.16
+
+The same setup was checked once on the production FortiGate with a temporary VLAN 21 (`po1`), `vxlan21` on `dmz` and a software switch with a DHCP server, using two Kubernetes nodes with a network namespace as the pod. The configuration was removed afterwards.
+
+- FortiOS 6.2.16 accepts a VLAN interface and a VXLAN interface in one software switch. The DHCP server has no `vci-match` setting to change.
+- Pods got addresses from the FortiGate, had no default route, and reached the FortiGate with 1450-byte packets (DF set).
+- Pod to pod across nodes failed without `peers` and worked with them (ping, broadcast, multicast). FortiOS 6.2 does not forward between VXLAN remotes either.
+- With the `connected` routes redistributed into BGP, the software switch subnet is advertised as soon as it has an address.
+- In the test, the pods on both nodes used the same container ID and got the same DHCP address, because the `dhcp` IPAM plugin derives the client ID from it. Kubernetes container IDs are unique, so this does not happen there.
+
+Throughput and CPU load were not measured; there was no host on VLAN 21 to send traffic through the FortiGate.
