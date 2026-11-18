@@ -103,7 +103,7 @@ end
 
 ## Installation
 
-1. Build the binary and copy it to the CNI binary directory (usually `/opt/cni/bin/vxlan`) on every node.
+1. Download `vxlan-linux-<arch>` from the [releases](https://github.com/TechnoTUT/vxlan-cni/releases) (checksums in `SHA256SUMS`), or build it, and install it as `vxlan` in the CNI binary directory (usually `/opt/cni/bin/vxlan`) on every node.
 2. When using `"ipam": {"type": "dhcp"}`, run the DHCP daemon on every node (`/opt/cni/bin/dhcp daemon`, e.g. as a systemd unit).
 3. Allow UDP 4789 between the nodes and the remote VTEP.
 
@@ -121,5 +121,7 @@ end
 go test ./...
 go build -o vxlan .
 ```
+
+Pushing a `v*` tag builds the binaries and creates a GitHub release.
 
 [test/fortigate](test/fortigate) runs the plugin against a FortiGate VM.
