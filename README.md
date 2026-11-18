@@ -30,7 +30,7 @@ flowchart LR
 On ADD the plugin:
 
 1. Reads the VLAN ID from the pod and rejects it unless it is in `allowedVlans`.
-2. Creates `vxlan<ID>` (VNI = VLAN ID, default remote = `remote`) and the bridge `vxbr<ID>` if they do not exist yet, and adds an FDB entry for each of `peers`.
+2. Creates `vxlan<ID>` (VNI = VLAN ID + `vniOffset`, default remote = `remote`) and the bridge `vxbr<ID>` if they do not exist yet, and adds an FDB entry for each of `peers`.
 3. Creates a veth pair, attaches the host end to `vxbr<ID>`, and runs the IPAM plugin for the pod end.
 
 On DEL it removes the pod interface, releases the address, and deletes `vxbr<ID>` and `vxlan<ID>` when no pod on the node uses them any more. VTEP changes are serialized with a lock file (`/run/vxlan-cni.lock`).
@@ -48,6 +48,7 @@ The VTEP is the Linux kernel's VXLAN device; the plugin only manages it. The rem
 | `mtu` | Underlay MTU minus 50 | MTU of the VXLAN device, the bridge and the pod interface. |
 | `peers` | None | Other nodes that also receive flooded frames, so pods on different nodes reach each other directly. The node's own address may be listed; it is skipped. |
 | `vlan` | None | VLAN used when the pod does not request one. |
+| `vniOffset` | `0` | Added to the VLAN ID to get the VNI. FortiOS allows each VNI on only one VXLAN interface, so nodes that reach the FortiGate through another interface need their own VNI, e.g. `10000` for VNI 10020 on VLAN 20. |
 | `keepDefaultRoute` | `false` | Keep a default route returned by IPAM. By default it is dropped, because the pod's primary network owns the default route. |
 | `ipam` | None | Any IPAM plugin. Without it the pod interface has no address. |
 

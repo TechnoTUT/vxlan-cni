@@ -111,7 +111,7 @@ func ensureVxlan(n *NetConf, vlan int, dev netlink.Link, local net.IP, mtu int) 
 		if !ok {
 			return nil, fmt.Errorf("%s exists but is not a vxlan device", name)
 		}
-		if vx.VxlanId != vlan || !vx.Group.Equal(n.remote) || vx.Port != n.Port {
+		if vx.VxlanId != n.vni(vlan) || !vx.Group.Equal(n.remote) || vx.Port != n.Port {
 			return nil, fmt.Errorf("%s exists with different settings (vni %d, remote %s, port %d); delete it once no pod uses it",
 				name, vx.VxlanId, vx.Group, vx.Port)
 		}
@@ -119,7 +119,7 @@ func ensureVxlan(n *NetConf, vlan int, dev netlink.Link, local net.IP, mtu int) 
 	}
 	vx := &netlink.Vxlan{
 		LinkAttrs:    netlink.LinkAttrs{Name: name, MTU: mtu, TxQLen: -1},
-		VxlanId:      vlan,
+		VxlanId:      n.vni(vlan),
 		VtepDevIndex: dev.Attrs().Index,
 		SrcAddr:      local,
 		Group:        n.remote, // a unicast group is the default remote

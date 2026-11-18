@@ -16,6 +16,7 @@ const (
 	vxlanOverhead    = 50
 	vxlanNamePrefix  = "vxlan"
 	bridgeNamePrefix = "vxbr"
+	maxVNI           = 1<<24 - 1
 )
 
 // NetConf is the network configuration read from stdin.
@@ -38,6 +39,10 @@ type NetConf struct {
 	AllowedVLANs []vlanRange `json:"allowedVlans"`
 	// VLAN is used when the pod does not request one.
 	VLAN int `json:"vlan,omitempty"`
+	// VNIOffset is added to the VLAN ID to get the VNI. Use it when the remote
+	// VTEP needs a different VNI for this set of nodes (FortiOS allows each VNI
+	// on one VXLAN interface only).
+	VNIOffset int `json:"vniOffset,omitempty"`
 	// KeepDefaultRoute keeps a default route returned by IPAM. By default it is
 	// dropped, because the pod's primary network (e.g. Cilium) owns the default route.
 	KeepDefaultRoute bool `json:"keepDefaultRoute,omitempty"`
@@ -124,6 +129,9 @@ func loadConf(stdin []byte) (*NetConf, error) {
 	if n.MTU < 0 {
 		return nil, fmt.Errorf("invalid mtu %d", n.MTU)
 	}
+	if n.VNIOffset < 0 || n.VNIOffset+4094 > maxVNI {
+		return nil, fmt.Errorf("vniOffset must be 0-%d", maxVNI-4094)
+	}
 	if len(n.AllowedVLANs) == 0 {
 		return nil, errors.New("allowedVlans is required")
 	}
@@ -170,6 +178,8 @@ func (n *NetConf) allowed(v int) bool {
 	}
 	return false
 }
+
+func (n *NetConf) vni(vlan int) int { return vlan + n.VNIOffset }
 
 func vxlanName(vlan int) string    { return fmt.Sprintf("%s%d", vxlanNamePrefix, vlan) }
 func bridgeNameOf(vlan int) string { return fmt.Sprintf("%s%d", bridgeNamePrefix, vlan) }

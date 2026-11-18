@@ -28,6 +28,8 @@ func TestLoadConfErrors(t *testing.T) {
 		"vlan out of range":    `{` + base + `,"allowedVlans":[4095]}`,
 		"reversed range":       `{` + base + `,"allowedVlans":["45-42"]}`,
 		"bad port":             `{` + base + `,"allowedVlans":[10],"port":70000}`,
+		"negative vniOffset":   `{` + base + `,"allowedVlans":[10],"vniOffset":-1}`,
+		"vniOffset too large":  `{` + base + `,"allowedVlans":[10],"vniOffset":16773122}`,
 	}
 	for name, in := range cases {
 		if _, err := loadConf([]byte(in)); err == nil {
@@ -77,6 +79,15 @@ func TestResolveVLAN(t *testing.T) {
 		if err != nil || got != c.want {
 			t.Errorf("%s: got %d, %v; want %d", c.name, got, err, c.want)
 		}
+	}
+}
+
+func TestVNI(t *testing.T) {
+	if got := conf(t, `"allowedVlans":[20]`).vni(20); got != 20 {
+		t.Errorf("vni = %d, want 20", got)
+	}
+	if got := conf(t, `"allowedVlans":[20],"vniOffset":10000`).vni(20); got != 10020 {
+		t.Errorf("vni = %d, want 10020", got)
 	}
 }
 
