@@ -13,10 +13,18 @@ metadata:
 
 ## How it works
 
-```
-VLAN 20 hosts --- switch --- remote VTEP (e.g. FortiGate) ---- VXLAN, VNI 20, UDP 4789 ----+
-                             VLAN 20 + vxlan in one L2 domain                               |
-                                                                       node: vxlan20 -- vxbr20 -- veth -- pod
+```mermaid
+flowchart LR
+  hosts["Hosts on VLAN 20"] --- sw["Switch"]
+  sw -- "802.1Q tag 20" --- vlan
+  subgraph remote["Remote VTEP (e.g. FortiGate)"]
+    vlan["VLAN 20"] --- swi["Software switch"] --- rvx["VXLAN, VNI 20"]
+  end
+  rvx <-- "UDP 4789" --> vx
+  subgraph node["Node"]
+    vx["vxlan20"] --- br["vxbr20"] --- veth["veth"]
+  end
+  veth --- pod["Pod (net1)"]
 ```
 
 On ADD the plugin:
